@@ -189,10 +189,14 @@ def load_and_embed_repository(repo_url: str) -> str:
            path.startswith('.git') or path.startswith('node_modules') or path.startswith('__pycache__'):
             continue
         
-        # --- MODIFIED LINE: Call the tool function directly and check for explicit error prefix ---
-        file_content = get_file_content(repo_url, path) 
-        if not file_content.startswith("Error:"): # Only consider it an error if the string explicitly starts with "Error:"
-        # --- END MODIFIED LINE ---
+        # --- MODIFIED LINE FOR THE ATTRIBUTEERROR FIX ---
+        # Changed from get_file_content(repo_url, path) back to get_file_content.func(repo_url, path)
+        file_content = get_file_content.func(repo_url, path) 
+        
+        # --- MODIFIED LINE FOR THE "Could not fetch content for app.py" WARNING FIX ---
+        # Changed from if "Error:" not in file_content: to if not file_content.startswith("Error:"):
+        if not file_content.startswith("Error:"):
+        # --- END MODIFIED LINES ---
             # Split the content into chunks
             chunks = text_splitter.create_documents([file_content], metadatas=[{"source": path, "repo_url": repo_url}])
             all_documents_for_embedding.extend(chunks)
