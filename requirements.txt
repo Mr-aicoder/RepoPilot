@@ -7,3 +7,4 @@ python-dotenv
 langchain-community
 sentence-transformers
 chromadb
+pysqlite3-binary
