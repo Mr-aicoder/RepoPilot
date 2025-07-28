@@ -3,9 +3,6 @@ __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-
-
-
 import streamlit as st
 import os
 import requests
@@ -48,6 +45,8 @@ if "vector_store" not in st.session_state: # Re-initialize vector_store for sing
     st.session_state.vector_store = None
 if "vector_store_repo_url" not in st.session_state: # Re-initialize vector_store_repo_url for single session
     st.session_state.vector_store_repo_url = ""
+if "debug_response" not in st.session_state: # New: To store response for debug/generation
+    st.session_state.debug_response = ""
 
 
 # --- GitHub API Interaction Functions ---
@@ -190,13 +189,16 @@ def load_and_embed_repository(repo_url: str) -> str:
            path.startswith('.git') or path.startswith('node_modules') or path.startswith('__pycache__'):
             continue
         
-        file_content = get_file_content.func(repo_url, path) 
-        if "Error:" not in file_content:
+        # --- MODIFIED LINE: Call the tool function directly and check for explicit error prefix ---
+        file_content = get_file_content(repo_url, path) 
+        if not file_content.startswith("Error:"): # Only consider it an error if the string explicitly starts with "Error:"
+        # --- END MODIFIED LINE ---
             # Split the content into chunks
             chunks = text_splitter.create_documents([file_content], metadatas=[{"source": path, "repo_url": repo_url}])
             all_documents_for_embedding.extend(chunks)
             processed_count += 1
         else:
+            # This branch will now only execute if get_file_content actually returned a proper error message
             st.warning(f"Could not fetch content for {path}: {file_content}")
 
     if not all_documents_for_embedding:
@@ -280,13 +282,13 @@ def initialize_chatbot(groq_api_key): # Removed current_user_id as it's no longe
 
              **Instructions for Error Solving and Code Generation:**
              - If the user provides an error message (e.g., a traceback, a console error), or asks for a code modification/generation:
-                - First, try to identify the relevant file(s) mentioned in the error or implied by the request.
-                - Use `get_file_content` to retrieve the content of the identified file(s). If the user provides a code snippet, analyze that directly.
-                - Analyze the error message in the context of the code.
-                - Propose a solution: This should include an explanation of the problem and the proposed code changes.
-                - **Always output proposed code changes in a markdown code block (e.g., ```python\n# new code\n```).**
-                - If you need more context (e.g., a specific file path, the full error message, or surrounding code), ask the user for it.
-                - If the error seems unrelated to the repository's code (e.g., environment setup), provide general debugging advice.
+                 - First, try to identify the relevant file(s) mentioned in the error or implied by the request.
+                 - Use `get_file_content` to retrieve the content of the identified file(s). If the user provides a code snippet, analyze that directly.
+                 - Analyze the error message in the context of the code.
+                 - Propose a solution: This should include an explanation of the problem and the proposed code changes.
+                 - **Always output proposed code changes in a markdown code block (e.g., ```python\n# new code\n```).**
+                 - If you need more context (e.g., a specific file path, the full error message, or surrounding code), ask the user for it.
+                 - If the error seems unrelated to the repository's code (e.g., environment setup), provide general debugging advice.
 
              **General Instructions:**
              - When a user provides a GitHub URL, first acknowledge it.
@@ -361,13 +363,13 @@ with st.sidebar:
     # Display current status of keys
     st.subheader("API Key Status:")
     if GROQ_API_KEY:
-        st.success("Groq API Key Loaded!")
+        st.success("Groq API Key Loaded! ✅")
     else:
-        st.error("Groq API Key Missing!")
+        st.error("Groq API Key Missing! ❌")
     if GITHUB_TOKEN:
-        st.success("GitHub Token Loaded!")
+        st.success("GitHub Token Loaded! ✅")
     else:
-        st.warning("GitHub Token Missing (Optional)!")
+        st.warning("GitHub Token Missing (Optional)! ⚠️")
 
 # Create two columns for the main content
 col1, col2 = st.columns([2, 1]) # Adjust ratio as needed, e.g., 2 for chat, 1 for debug
@@ -383,15 +385,16 @@ with col1: # Left column for general repo interaction and chat
         st.session_state.agent_executor = None # Re-initialize agent if URL changes
         st.session_state.vector_store = None # Clear vector store for new repo
         st.session_state.vector_store_repo_url = ""
+        st.session_state.debug_response = "" # Clear debug response as well
         st.rerun()
 
     # Initialize the chatbot agent if not already initialized
     if st.session_state.agent_executor is None and GROQ_API_KEY:
         st.session_state.agent_executor = initialize_chatbot(GROQ_API_KEY)
         if st.session_state.agent_executor:
-            st.success("Chatbot initialized! Ask me about the repository.")
+            st.success("Chatbot initialized! Ask me about the repository. 🚀")
         else:
-            st.error("Failed to initialize chatbot. Please check your Groq API key.")
+            st.error("Failed to initialize chatbot. Please check your Groq API key. 😔")
 
     # Display file tree and semantic search button only if a repo URL is provided
     if st.session_state.repo_url and st.session_state.agent_executor:
@@ -404,7 +407,7 @@ with col1: # Left column for general repo interaction and chat
                     st.error(file_list_str)
 
         if st.button("Load Repository for Semantic Search"):
-            with st.spinner("Loading and embedding repository content... This may take a while for large repos."):
+            with st.spinner("Loading and embedding repository content... This may take a while for large repos. ⏳"):
                 result = load_and_embed_repository.invoke(st.session_state.repo_url)
                 st.info(result)
                 st.session_state.messages.append({"role": "assistant", "content": result})
@@ -457,27 +460,27 @@ with col1: # Left column for general repo interaction and chat
 
         if not st.session_state.repo_url:
             with st.chat_message("assistant"):
-                st.error("Please enter a GitHub repository URL first.")
+                st.error("Please enter a GitHub repository URL first. ⚠️")
             st.session_state.messages.append({"role": "assistant", "content": "Please enter a GitHub repository URL first."})
         elif st.session_state.agent_executor:
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
+                with st.spinner("Thinking... 💬"):
                     try:
                         full_prompt = f"Regarding the repository at {st.session_state.repo_url}, {prompt}"
                         response = st.session_state.agent_executor.invoke({"input": full_prompt})
                         assistant_response = response.get("output", "I'm sorry, I couldn't process that request.")
                         st.markdown(assistant_response)
                     except Exception as e:
-                        st.error(f"An error occurred while processing your request: {e}")
+                        st.error(f"An error occurred while processing your request: {e} 💔")
                         assistant_response = f"An error occurred: {e}"
             st.session_state.messages.append({"role": "assistant", "content": assistant_response})
         else:
             with st.chat_message("assistant"):
-                st.warning("Chatbot not initialized. Please ensure your Groq API Key is set.")
+                st.warning("Chatbot not initialized. Please ensure your Groq API Key is set. 🔑")
             st.session_state.messages.append({"role": "assistant", "content": "Chatbot not initialized. Please ensure your Groq API Key is set."})
 
 with col2: # Right column for Code Debugging & Generation
-    st.markdown("## Code Debugging & Generation")
+    st.markdown("## Code Debugging & Generation 🛠️")
     error_input = st.text_area(
         "Paste your error message or describe what code you need generated/modified:",
         height=300, # Increased height for better visibility
@@ -486,20 +489,64 @@ with col2: # Right column for Code Debugging & Generation
     )
     if st.button("Solve Error / Generate Code", key="solve_error_button_col2"):
         if error_input:
-            # Append error input as a user message to chat history
-            st.session_state.messages.append({"role": "user", "content": f"Error/Code Request: {error_input}"})
-            # Process the error input
-            with col1: # Display assistant response in the left column (chat area)
-                with st.chat_message("assistant"):
-                    with st.spinner("Analyzing error and generating solution..."):
-                        try:
-                            full_prompt_for_error = f"Regarding the repository at {st.session_state.repo_url}, I encountered this issue/need this code: {error_input}"
-                            response = st.session_state.agent_executor.invoke({"input": full_prompt_for_error})
-                            assistant_response = response.get("output", "I'm sorry, I couldn't process that request.")
-                            st.markdown(assistant_response)
-                        except Exception as e:
-                            st.error(f"An error occurred while processing your request: {e}")
-                            assistant_response = f"An error occurred: {e}"
-                st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+            # We don't add this to st.session_state.messages, as we want its response in col2
+            # Add a temporary user message if you want to see the prompt in the main chat for context,
+            # but its response won't be there.
+            # st.session_state.messages.append({"role": "user", "content": f"Error/Code Request: {error_input}"})
+            
+            with st.spinner("Analyzing error and generating solution... 💡"):
+                try:
+                    # Construct prompt for the agent
+                    full_prompt_for_error = f"Regarding the repository at {st.session_state.repo_url}, I encountered this issue/need this code: {error_input}"
+                    
+                    # Invoke the agent executor
+                    response = st.session_state.agent_executor.invoke({"input": full_prompt_for_error})
+                    
+                    # Store the response specifically for debug/generation output
+                    st.session_state.debug_response = response.get("output", "I'm sorry, I couldn't process that request.")
+                    
+                except Exception as e:
+                    st.session_state.debug_response = f"An error occurred while processing your request: {e} 💔"
         else:
-            st.warning("Please paste an error message or describe your code generation/modification request.")
+            st.session_state.debug_response = "Please paste an error message or describe your code generation/modification request. 📋"
+        # Rerun to display the stored debug_response
+        st.rerun() 
+
+    # Display the stored debug/generation response below the input area in col2
+    if st.session_state.debug_response:
+        st.markdown("### RepoPilot's Analysis & Solution:")
+        if "```" in st.session_state.debug_response:
+            parts = st.session_state.debug_response.split("```")
+            for i, part in enumerate(parts):
+                if i % 2 == 1:
+                    lang = "python" # Default language for code blocks
+                    # Attempt to infer language from the first line of the code block
+                    first_line_of_code = part.strip().split('\n')[0]
+                    if first_line_of_code.lower().startswith("python"):
+                        lang = "python"
+                        part = part.lstrip("python\n").lstrip("Python\n")
+                    elif first_line_of_code.lower().startswith("javascript"):
+                        lang = "javascript"
+                        part = part.lstrip("javascript\n").lstrip("JavaScript\n")
+                    elif first_line_of_code.lower().startswith("html"):
+                        lang = "html"
+                        part = part.lstrip("html\n").lstrip("HTML\n")
+                    elif first_line_of_code.lower().startswith("css"):
+                        lang = "css"
+                        part = part.lstrip("css\n").lstrip("CSS\n")
+                    elif first_line_of_code.lower().startswith("json"):
+                        lang = "json"
+                        part = part.lstrip("json\n").lstrip("JSON\n")
+                    elif first_line_of_code.lower().startswith("bash"):
+                        lang = "bash"
+                        part = part.lstrip("bash\n").lstrip("Bash\n")
+                    elif first_line_of_code.lower().startswith("diff"):
+                        lang = "diff"
+                        part = part.lstrip("diff\n").lstrip("Diff\n")
+                    elif first_line_of_code.lower().startswith("\n"): # If no explicit language, just trim newline
+                        part = part[1:]
+                    st.code(part, language=lang)
+                else:
+                    st.markdown(part)
+        else:
+            st.markdown(st.session_state.debug_response)
