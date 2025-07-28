@@ -1,7 +1,13 @@
 
 # 🤖 RepoPilot: Your AI-Powered GitHub Repository Assistant
 
-##RepoPilot is an intelligent chatbot designed to streamline your interaction with GitHub repositories. Powered by large language models and advanced retrieval techniques, it acts as your personal AI assistant for understanding codebases, debugging issues, and even generating code snippets. It's specifically tailored to help developers building GenAI and Agentic AI applications.
+RepoPilot is an intelligent chatbot designed to streamline your interaction with GitHub repositories. Powered by large language models and advanced retrieval techniques, it acts as your personal AI assistant for understanding codebases, debugging issues, and even generating code snippets. It's specifically tailored to help developers building GenAI and Agentic AI applications.
+
+
+
+https://github.com/user-attachments/assets/f3998c84-ef3d-46c7-ad6f-77af0aab1c7c
+
+
 
 ## ✨ Features
 GitHub Repository Integration: Easily connect to any public GitHub repository by providing its URL.
