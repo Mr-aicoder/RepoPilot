@@ -30,6 +30,8 @@ Conversational Memory: RepoPilot remembers the context of your conversation, all
 
 Named AI Assistant: When asked, RepoPilot proudly identifies itself by its name.
 
+<img width="1167" height="886" alt="RepoPilot New Diagram" src="https://github.com/user-attachments/assets/d2002057-1b48-436a-84f9-1181185a8bf1" />
+
 ## 🚀 Getting Started
 Follow these steps to set up and run RepoPilot locally.
 
@@ -117,7 +119,7 @@ Value: ghp_your_github_token_here (your actual token)
 Follow the Streamlit Deployment Guide: For detailed step-by-step instructions on deploying, refer to the official Streamlit deployment guide.
 
 
-<img width="1167" height="886" alt="RepoPilot New Diagram" src="https://github.com/user-attachments/assets/d2002057-1b48-436a-84f9-1181185a8bf1" />
+
 
 
 ## 💡 How to Use RepoPilot
