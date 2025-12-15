@@ -14,7 +14,7 @@ GitHub Repository Integration: Easily connect to any public GitHub repository by
 
 Semantic Search (RAG): Load and embed repository content into a vector store to perform semantic searches. Ask high-level questions about the codebase's purpose, architecture, or specific functionalities.
 
-File Tree Visualization: Get a quick overview of the repository's structure with an interactive file tree.
+File Tree Visualization: Get a quick overview of the repository's structure with an interactive file tree
 
 Specialized Code Debugging & Error Solving:
 
