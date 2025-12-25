@@ -27,7 +27,6 @@ Expertise in GenAI/Agentic AI: Specializes in diagnosing issues related to LLM A
 Code Generation: Request new code snippets or modifications based on your descriptions, with output formatted in clear code blocks.
 
 Conversational Memory: RepoPilot remembers the context of your conversation, allowing for more natural and continuous interactions.
-
 Named AI Assistant: When asked, RepoPilot proudly identifies itself by its name.
 
 <img width="1167" height="886" alt="RepoPilot New Diagram" src="https://github.com/user-attachments/assets/d2002057-1b48-436a-84f9-1181185a8bf1" />
