@@ -12,6 +12,7 @@ https://github.com/user-attachments/assets/f3998c84-ef3d-46c7-ad6f-77af0aab1c7c
 ## ✨ Features
 GitHub Repository Integration: Easily connect to any public GitHub repository by providing its URL.
 
+
 Semantic Search (RAG): Load and embed repository content into a vector store to perform semantic searches. Ask high-level questions about the codebase's purpose, architecture, or specific functionalities.
 
 File Tree Visualization: Get a quick overview of the repository's structure with an interactive file tree
